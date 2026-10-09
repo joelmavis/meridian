@@ -1,0 +1,7 @@
+interface:
+  display_name: "Meridian"
+  short_description: "欧洲 AI 治理与科技政治情报雷达"
+  default_prompt: "使用 $meridian 生成截至今天 07:00 的欧洲 AI 治理每日情报雷达。"
+
+policy:
+  allow_implicit_invocation: true
