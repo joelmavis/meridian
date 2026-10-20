@@ -22,6 +22,10 @@ def message(index: int, priority: str = "P2", is_x_post: bool = False) -> str:
   <p>发生了什么：一项可验证的变化。</p>
   <p>为什么值得关注：它可能影响全球 AI 治理。</p>
   <p>适合做什么类型内容：快评文章</p>
+  <p>个人短评（中文）：这是一条有边界的个人理解。</p>
+  <p>Personal take (English)：This is a bounded personal interpretation.</p>
+  <p>可选回复（中文）：值得继续看它如何落实。</p>
+  <p>Optional reply (English)：Worth watching how this gets implemented.</p>
   {x_fields}
   <p>来源：<a href=\"{source}\">原始来源</a></p>
 </article>"""
@@ -66,3 +70,7 @@ class RadarValidationTests(unittest.TestCase):
     def test_rejects_fewer_than_three_x_posts(self):
         messages = "\n".join(message(index, is_x_post=index <= 2) for index in range(1, 11))
         self.assertNotEqual(self.validate(report(messages)).returncode, 0)
+
+    def test_rejects_message_without_personal_take(self):
+        messages = "\n".join(message(index, is_x_post=index <= 3) for index in range(1, 11))
+        self.assertNotEqual(self.validate(report(messages.replace("个人短评（中文）：", ""))).returncode, 0)

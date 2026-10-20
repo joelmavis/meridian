@@ -14,6 +14,10 @@ REQUIRED_LABELS = (
     "为什么值得关注：",
     "适合做什么类型内容：",
     "来源：",
+    "个人短评（中文）：",
+    "Personal take (English)：",
+    "可选回复（中文）：",
+    "Optional reply (English)：",
 )
 CONTENT_TYPES = {
     "深度研究",
