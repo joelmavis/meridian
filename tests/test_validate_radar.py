@@ -9,63 +9,50 @@ ROOT = Path(__file__).resolve().parents[1]
 VALIDATOR = ROOT / "scripts" / "validate_radar.py"
 
 
-def signal(title: str, priority: str = "P1") -> str:
-    return f"""### 1. {title}
+def message(index: int, priority: str = "P2") -> str:
+    return f"""<article>
+  <h3>{index}. 测试消息</h3>
+  <p>重要性：中</p>
+  <p>优先级：{priority}</p>
+  <p>发生了什么：一项可验证的变化。</p>
+  <p>为什么值得关注：它可能影响全球 AI 治理。</p>
+  <p>适合做什么类型内容：快评文章</p>
+  <p>来源：<a href=\"https://example.org/{index}\">原始来源</a></p>
+</article>"""
 
-优先级：{priority}
-发生了什么：一项可验证的变化。
-为什么重要：它可能改变治理或依赖关系。
-所属研究方向：欧洲科技政治
-与欧洲 AI 治理的关系：该变化直接影响欧盟 AI 治理的实施或外部影响。
-来源：https://example.org/primary
-建议动作：快速研究
-"""
+
+def report(messages: str) -> str:
+    return f"""<!doctype html>
+<html lang=\"zh-CN\"><body>
+<h1>Meridian｜全球 AI 治理晨报</h1>
+<h2>今日 10 条消息</h2>
+{messages}
+<h2>本日判断</h2><h3>可确认事实</h3><p>事实。</p>
+<h3>基于现有事实的推论</h3><p>推论。</p>
+<h2>今日建议</h2><p>下一步。</p>
+<h2>来源与方法说明</h2><p>说明。</p>
+</body></html>"""
 
 
 class RadarValidationTests(unittest.TestCase):
     def validate(self, text: str) -> subprocess.CompletedProcess[str]:
         with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory) / "daily.md"
-            path.write_text("# 每日情报雷达\n\n## 今日 3 个信号\n\n" + text, encoding="utf-8")
+            path = Path(directory) / "daily.html"
+            path.write_text(text, encoding="utf-8")
             return subprocess.run([sys.executable, str(VALIDATOR), str(path)], capture_output=True, text=True)
 
-    def test_accepts_exactly_three_signals(self):
-        text = "\n".join(signal(f"信号{i}").replace("### 1.", f"### {i}.") for i in range(1, 4))
-        self.assertEqual(self.validate(text).returncode, 0)
+    def test_accepts_exactly_ten_messages(self):
+        messages = "\n".join(message(index) for index in range(1, 11))
+        self.assertEqual(self.validate(report(messages)).returncode, 0)
 
-    def test_rejects_more_than_three_signals(self):
-        text = "\n".join(signal(f"信号{i}").replace("### 1.", f"### {i}.") for i in range(1, 5))
-        self.assertNotEqual(self.validate(text).returncode, 0)
+    def test_rejects_fewer_than_ten_messages(self):
+        messages = "\n".join(message(index) for index in range(1, 10))
+        self.assertNotEqual(self.validate(report(messages)).returncode, 0)
 
-    def test_rejects_fewer_than_three_signals(self):
-        self.assertNotEqual(self.validate(signal("官方政策变化")).returncode, 0)
+    def test_rejects_message_without_source_link(self):
+        messages = "\n".join(message(index) for index in range(1, 11))
+        self.assertNotEqual(self.validate(report(messages.replace('href=\"https://example.org/1\"', ''))).returncode, 0)
 
-    def test_accepts_a_counter_signal(self):
-        text = "\n".join(
-            signal(title, priority).replace("### 1.", f"### {index}.")
-            for index, (title, priority) in enumerate(
-                [
-                    ("成员国公开反对共同云主权框架", "P2"),
-                    ("官方政策变化", "P1"),
-                    ("基础设施建设进展", "P3"),
-                ],
-                start=1,
-            )
-        )
-        self.assertEqual(self.validate(text).returncode, 0)
-
-    def test_accepts_global_ai_geopolitics_track(self):
-        text = "\n".join(
-            signal(title, priority)
-            .replace("### 1.", f"### {index}.")
-            .replace("所属研究方向：欧洲科技政治", "所属研究方向：全球AI地缘政治与多边治理")
-            for index, (title, priority) in enumerate(
-                [
-                    ("多边 AI 标准进展", "P1"),
-                    ("全球南方基础设施项目", "P2"),
-                    ("区域政策动态", "P3"),
-                ],
-                start=1,
-            )
-        )
-        self.assertEqual(self.validate(text).returncode, 0)
+    def test_accepts_p3_background_signal(self):
+        messages = "\n".join(message(index, "P3" if index == 10 else "P2") for index in range(1, 11))
+        self.assertEqual(self.validate(report(messages)).returncode, 0)
