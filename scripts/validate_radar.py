@@ -52,6 +52,15 @@ def main() -> int:
             errors.append("message has invalid content type")
         if not re.search(r"<a\s+href=[\"'][^\"']+[\"']", article, re.IGNORECASE):
             errors.append("message missing a source link")
+    x_posts = [article for article in articles if "来源类型：</strong>X 原帖" in article]
+    if not 3 <= len(x_posts) <= 5:
+        errors.append("daily radar must contain three to five X posts")
+    for article in x_posts:
+        for label in ("作者／机构：</strong>", "原帖语言：</strong>"):
+            if label not in article:
+                errors.append(f"X post missing {label}")
+        if not re.search(r"href=[\"']https://(?:www\.)?x\.com/", article, re.IGNORECASE):
+            errors.append("X post missing an X source link")
     for heading in ("本日判断", "可确认事实", "基于现有事实的推论", "今日建议", "来源与方法说明"):
         if heading not in text:
             errors.append(f"daily radar missing {heading}")
